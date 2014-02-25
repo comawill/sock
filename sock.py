@@ -4,6 +4,7 @@
 import re
 import socket
 from time import time
+import telnetlib
 from socket import timeout as Timeout, error as SocketError
 
 __all__ = "Sock Sock6 toSock Timeout SocketError".split()
@@ -33,6 +34,15 @@ class Sock:
         self.buf = ""
         return buf
 
+    def read_final(self):
+       try:
+           res = self.read_all()
+       except Timeout:
+           return self.buf
+       except EOFError:
+           return self.buf
+       return res
+
     def read_all(self, timeout=None):
         res = self.read_cond(lambda x: x.eof, timeout)
         self.buf = ""
@@ -44,6 +54,11 @@ class Sock:
         pos = self.buf.find(s)
         self.buf = self.buf[pos:]
         return
+
+    def telnet(self):
+        t = telnetlib.Telnet()
+        t.sock = self.sock
+        t.interact()
 
     def wait_for_re(self, r, timeout=None):
         """Wait for RE in dataflow, DO NOT return data (to avoid splitting data)"""
